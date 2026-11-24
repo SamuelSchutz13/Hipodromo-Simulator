@@ -1,0 +1,428 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+/* gallop: the whole sprite bobs, legs swing in two opposite phases */
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-3px) rotate(-2deg); } }
+@keyframes leg-a { 0%, 100% { transform: rotate(32deg); } 50% { transform: rotate(-32deg); } }
+@keyframes leg-b { 0%, 100% { transform: rotate(-28deg); } 50% { transform: rotate(28deg); } }
+@keyframes tail { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
+.leg, .tail { transform-box: fill-box; transform-origin: top center; }
+.tail { transform-origin: top right; }
+.galloping { animation: bob 0.32s ease-in-out infinite; }
+.galloping .leg-a { animation: leg-a 0.32s ease-in-out infinite; }
+.galloping .leg-b { animation: leg-b 0.32s ease-in-out infinite; }
+.galloping .tail { animation: tail 0.32s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .galloping, .galloping * { animation: none !important; } }
+.finish-line {
+  background-image: repeating-conic-gradient(#fff 0 25%, #111 0 50%);
+  background-size: 10px 10px;
+}
+/* track surfaces: grass, sand, dirt × dry, wet, heavy */
+.surf-grama-seca { background: repeating-linear-gradient(90deg, #166534 0 60px, #15803d 60px 120px); }
+.surf-grama-molhada { background: repeating-linear-gradient(90deg, #14532d 0 60px, #166534 60px 120px); }
+.surf-grama-pesada { background: radial-gradient(ellipse 60px 10px at 30% 60%, rgb(147 197 253 / .25), transparent 70%), radial-gradient(ellipse 80px 12px at 75% 30%, rgb(147 197 253 / .2), transparent 70%), repeating-linear-gradient(90deg, #0f3d22 0 60px, #14532d 60px 120px); }
+.surf-areia-seca { background: repeating-linear-gradient(90deg, #d6b77a 0 60px, #ccab6b 60px 120px); }
+.surf-areia-molhada { background: repeating-linear-gradient(90deg, #a8875a 0 60px, #9c7c50 60px 120px); }
+.surf-areia-pesada { background: radial-gradient(ellipse 50px 10px at 20% 30%, rgb(30 20 10 / .55), transparent 70%), radial-gradient(ellipse 70px 12px at 65% 70%, rgb(30 20 10 / .5), transparent 70%), radial-gradient(ellipse 40px 8px at 85% 20%, rgb(30 20 10 / .5), transparent 70%), repeating-linear-gradient(90deg, #8a6d45 0 60px, #7f6440 60px 120px); }
+.surf-terra-seca { background: repeating-linear-gradient(90deg, #9a5b2c 0 60px, #8f5427 60px 120px); }
+.surf-terra-molhada { background: repeating-linear-gradient(90deg, #6b4423 0 60px, #5f3c1f 60px 120px); }
+.surf-terra-pesada { background: radial-gradient(ellipse 50px 10px at 20% 30%, rgb(30 20 10 / .55), transparent 70%), radial-gradient(ellipse 70px 12px at 65% 70%, rgb(30 20 10 / .5), transparent 70%), radial-gradient(ellipse 40px 8px at 85% 20%, rgb(30 20 10 / .5), transparent 70%), repeating-linear-gradient(90deg, #4a3320 0 60px, #422d1c 60px 120px); }
+
+/* hooves kicking up dust / sand / mud / spray */
+@keyframes dust { from { transform: translate(0, 0) scale(.6); opacity: .9; } to { transform: translate(-22px, -10px) scale(1.6); opacity: 0; } }
+.dust { position: absolute; bottom: 0; left: 0; width: 8px; height: 8px; border-radius: 9999px; animation: dust .36s ease-out infinite; }
+
+/* rain streaks drifting down-left over the track */
+@keyframes rain { to { background-position: -40px 120px; } }
+.rain {
+  background-image: repeating-linear-gradient(105deg, transparent 0 14px, rgb(255 255 255 / 0.18) 14px 15px);
+  background-size: 40px 120px;
+  animation: rain 0.4s linear infinite;
+}
+.rain-heavy { background-image: repeating-linear-gradient(105deg, transparent 0 8px, rgb(255 255 255 / 0.25) 8px 9px); }
+
+@keyframes confetti-fall {
+  from { transform: translate(0, -20px) rotate(0deg); opacity: 1; }
+  to { transform: translate(var(--drift), 105vh) rotate(720deg); opacity: 0.6; }
+}
+.confetti {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall 3s ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) { .rain, .confetti, .dust { animation: none !important; display: none; } }
+
+/* betting booth: striped awning, scalloped edge, wooden body */
+.awning { background: repeating-linear-gradient(90deg, #dc2626 0 28px, #fafafa 28px 56px); }
+.awning-scallop {
+  -webkit-mask: radial-gradient(circle at 14px 0, #000 13.5px, transparent 14px) 0 0 / 28px 14px repeat-x;
+  mask: radial-gradient(circle at 14px 0, #000 13.5px, transparent 14px) 0 0 / 28px 14px repeat-x;
+}
+.booth-wood {
+  background: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.08) 0 2px, transparent 2px 22px), linear-gradient(#7c4a21, #5b3415);
+}
+.bubble::before {
+  content: ""; position: absolute; left: -7px; bottom: 10px;
+  border: 7px solid transparent; border-right-color: #fff; border-left: 0;
+}
+.chip {
+  width: 44px; height: 44px; border-radius: 9999px; color: #fff; font-weight: 800; font-size: 13px;
+  border: 4px dashed rgb(255 255 255 / 0.85); box-shadow: 0 2px 0 rgb(0 0 0 / 0.5), inset 0 0 0 3px rgb(0 0 0 / 0.25);
+  transition: transform 0.1s;
+}
+.chip:hover:not(:disabled) { transform: translateY(-3px); }
+.chip:active:not(:disabled) { transform: translateY(0) scale(0.95); }
+.chip:disabled { opacity: 0.4; }
+.chip-gold { background: linear-gradient(#fcd34d, #d97706); color: #451a03; font-size: 10px; }
+.ticket {
+  background: #fdf6e3;
+  /* torn edges top and bottom */
+  -webkit-mask: radial-gradient(circle 5px at 50% 0, transparent 98%, #000) 0 0 / 14px 51% repeat-x,
+    radial-gradient(circle 5px at 50% 100%, transparent 98%, #000) 0 100% / 14px 51% repeat-x;
+  mask: radial-gradient(circle 5px at 50% 0, transparent 98%, #000) 0 0 / 14px 51% repeat-x,
+    radial-gradient(circle 5px at 50% 100%, transparent 98%, #000) 0 100% / 14px 51% repeat-x;
+}
+.barcode { background: repeating-linear-gradient(90deg, #111 0 2px, transparent 2px 4px, #111 4px 5px, transparent 5px 8px, #111 8px 11px, transparent 11px 13px); }
+
+
+/* stable / barn */
+.barn-roof {
+  background: linear-gradient(#fafafa, #fafafa) bottom / 100% 4px no-repeat,
+    repeating-linear-gradient(0deg, #7f1d1d 0 6px, #991b1b 6px 12px);
+  clip-path: polygon(0 100%, 50% 0, 100% 100%);
+}
+.barn-wall { background: repeating-linear-gradient(90deg, #7f1d1d 0 26px, #6f1919 26px 28px); }
+.stall { background: repeating-linear-gradient(90deg, #3b2412 0 18px, #2e1c0e 18px 20px); }
+.stall-door { background: repeating-linear-gradient(90deg, #a0632f 0 16px, #8a5426 16px 18px); }
+.hay { background: repeating-linear-gradient(100deg, #eab308 0 3px, #ca8a04 3px 5px, #fde047 5px 7px); }
+.chalk {
+  background: #1c1917; color: #e7e5e4; border: 1px solid #57534e; border-radius: 3px; padding: 1px 5px;
+}
+.chalk-on { color: #fbbf24; border-color: #fbbf24; }
+@keyframes idle { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-1.5px) rotate(-1.5deg); } }
+.idle { animation: idle 2.6s ease-in-out infinite; }
+@keyframes lantern { 0%, 100% { filter: drop-shadow(0 0 4px #f59e0b); } 50% { filter: drop-shadow(0 0 10px #fbbf24); } }
+.lantern { animation: lantern 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .idle, .lantern { animation: none; } }
+
+/* trophy cabinet */
+.cabinet { background: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.07) 0 2px, transparent 2px 20px), linear-gradient(#6b3a17, #4a260e); border: 3px solid #2d1606; }
+.glass {
+  background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.06) 38%, transparent 46%), rgb(10 10 10 / 0.55);
+  border: 2px solid rgb(255 255 255 / 0.12);
+}
+.shelf { border-bottom: 6px solid #7c4a21; box-shadow: 0 4px 6px -2px rgb(0 0 0 / 0.6); }
+.medal-gold {
+  background: radial-gradient(circle at 35% 30%, #fff7cc, #fbbf24 45%, #b45309);
+  box-shadow: 0 0 0 3px #92400e, 0 0 14px rgb(251 191 36 / 0.45);
+  overflow: hidden;
+}
+.medal-gold::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 40%, rgb(255 255 255 / 0.7) 50%, transparent 60%);
+  transform: translateX(-120%); animation: shine 3.5s ease-in-out infinite;
+}
+@keyframes shine { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.medal-locked { background: #27272a; box-shadow: 0 0 0 3px #3f3f46; }
+.silhouette { filter: brightness(0); opacity: 0.45; }
+
+/* hanging chalkboard */
+.board-frame { background: linear-gradient(#8b5a2b, #5c3a1a); border: 2px solid #3b2410; }
+.chalkboard {
+  background: radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.07), transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgb(255 255 255 / 0.05), transparent 50%), #22302a;
+  box-shadow: inset 0 0 18px rgb(0 0 0 / 0.6);
+}
+.chalk-text { font-family: "Segoe Print", "Comic Sans MS", "Chalkboard SE", cursive; color: #f1f5f0; text-shadow: 0 0 1px rgb(255 255 255 / 0.6); }
+.chalk-green { color: #86efac; }
+.chalk-red { color: #fca5a5; }
+@media (prefers-reduced-motion: reduce) { .medal-gold::after { animation: none; } }
+
+/* track rail with posts, starting gates */
+.rail {
+  background: linear-gradient(#fafafa, #d4d4d4) center / 100% 4px no-repeat,
+    repeating-linear-gradient(90deg, #e5e5e5 0 3px, transparent 3px 36px), #14532d;
+}
+.gate {
+  border-top: 3px solid #15803d; border-bottom: 3px solid #15803d; border-left: 4px solid #166534;
+  background: repeating-linear-gradient(90deg, rgb(21 128 61 / 0.35) 0 2px, transparent 2px 12px);
+}
+.gate-door {
+  position: absolute; right: -3px; top: -3px; bottom: -3px; width: 6px; z-index: 10;
+  background: repeating-linear-gradient(180deg, #16a34a 0 6px, #dcfce7 6px 8px);
+  transform-origin: top; transition: transform 0.25s ease-out;
+}
+.gate-open { transform: scaleY(0.08); }
+
+/* race shown on a TV */
+.tv { background: linear-gradient(#2a2a2e, #0c0c0e); border: 1px solid #3f3f46; }
+.tv-screen { box-shadow: inset 0 0 0 2px #000, 0 0 0 1px #52525b; }
+.tv-screen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 30;
+  background: linear-gradient(125deg, rgb(255 255 255 / 0.07) 0%, transparent 35%),
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.07) 0 1px, transparent 1px 3px);
+}
+.lower-third { background: linear-gradient(90deg, #dc2626 0 6px, rgb(12 12 14 / 0.95) 6px); }
+.tv-btn {
+  min-width: 30px; border-radius: 9999px; padding: 1px 8px; font: 700 11px ui-monospace, monospace; color: #d4d4d8;
+  background: linear-gradient(#3f3f46, #18181b); border: 1px solid #52525b;
+}
+.tv-btn:hover { color: #fff; }
+.tv-neck { background: linear-gradient(90deg, #18181b, #3f3f46, #18181b); }
+.tv-base { background: linear-gradient(#3f3f46, #18181b); }
+
+/* "likes mud" tag: brushed iron plate splattered with mud, mud dripping underneath */
+.mud-tag {
+  position: relative; display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 3px 6px; border-radius: 4px;
+  color: #1c1917; font-weight: 800; text-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+  background: radial-gradient(ellipse 16px 6px at 82% 100%, #4a2c14 60%, transparent 63%),
+    radial-gradient(circle 3.5px at 93% 22%, #5c3818 70%, transparent 74%),
+    radial-gradient(ellipse 11px 5px at 6% 100%, #4a2c14 60%, transparent 63%),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.07) 0 1px, transparent 1px 3px), linear-gradient(#e7e5e4, #8a817c);
+  box-shadow: 0 0 0 1.5px #44403c, inset 0 1px 0 rgb(255 255 255 / 0.7), 0 2px 4px rgb(0 0 0 / 0.6);
+}
+.mud-tag::before, .mud-tag::after {
+  content: ""; position: absolute; top: 88%; background: linear-gradient(#5c3818, #3b2210);
+  border-radius: 50% 50% 50% 50% / 35% 35% 65% 65%;
+}
+.mud-tag::before { right: 20%; width: 6px; height: 10px; }
+.mud-tag::after { left: 12%; width: 4px; height: 7px; }
+
+/* "good on this surface" tag: gold prize plate with two V-cut ribbons */
+.medal-tag {
+  position: relative; display: inline-flex; align-items: center; padding: 2px 9px 3px; border-radius: 4px;
+  color: #451a03; font-weight: 800;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.55) 45%, transparent 55%), linear-gradient(#fde68a, #f59e0b 60%, #b45309);
+  box-shadow: 0 0 0 1.5px #78350f, inset 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 4px rgb(0 0 0 / 0.6);
+}
+.medal-tag::before, .medal-tag::after {
+  content: ""; position: absolute; top: 80%; width: 8px; height: 13px; z-index: -1;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+}
+.medal-tag::before { left: 26%; background: #dc2626; transform: rotate(10deg); }
+.medal-tag::after { right: 26%; background: #2563eb; transform: rotate(-10deg); }
+
+/* "long stamina" tag: stitched violet saddle cloth with brass rivets */
+.stamina-tag {
+  position: relative; display: inline-flex; align-items: center; padding: 2px 10px 3px; border-radius: 5px;
+  color: #f5f3ff; font-weight: 800; text-shadow: 0 1px 1px rgb(0 0 0 / 0.6);
+  background: radial-gradient(circle at 5px 50%, #fbbf24 1.6px, transparent 2.2px),
+    radial-gradient(circle at calc(100% - 5px) 50%, #fbbf24 1.6px, transparent 2.2px), linear-gradient(#7c3aed, #4c1d95);
+  outline: 1px dashed rgb(237 233 254 / 0.7); outline-offset: -3px;
+  box-shadow: 0 0 0 1.5px #2e1065, 0 2px 4px rgb(0 0 0 / 0.6);
+}
+
+/* balance banknote (fictional "Banco do Hipódromo" note) */
+.banknote {
+  position: relative; display: inline-flex; align-items: center; gap: 8px;
+  height: 42px; min-width: 176px; padding: 0 16px 4px 8px; border-radius: 4px; transform: rotate(-1.5deg);
+  background:
+    repeating-radial-gradient(circle at 0% 50%, rgb(255 255 255 / 0.16) 0 1px, transparent 1px 5px),
+    repeating-radial-gradient(circle at 100% 50%, rgb(5 46 22 / 0.10) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(45deg, rgb(0 0 0 / 0.04) 0 2px, transparent 2px 6px),
+    linear-gradient(135deg, #d1fae5, #6ee7b7 40%, #10b981 75%, #047857);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.45), inset 0 0 0 4px rgb(4 120 87 / 0.55),
+    0 3px 8px rgb(0 0 0 / 0.55);
+}
+.banknote::before { /* corner value marks */
+  content: "R$"; position: absolute; top: 3px; right: 7px; font: 800 8px ui-monospace, monospace; color: rgb(6 78 59 / 0.75);
+}
+.banknote::after {
+  content: "BANCO DO HIPÓDROMO"; position: absolute; bottom: 2px; left: 44px; right: 8px; text-align: center;
+  font: 700 6px/1 system-ui, sans-serif; letter-spacing: 0.18em; color: rgb(6 78 59 / 0.75);
+}
+.banknote-seal {
+  display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0;
+  border-radius: 9999px; font-size: 16px;
+  background: radial-gradient(circle, #ecfdf5 40%, #a7f3d0);
+  box-shadow: 0 0 0 1.5px #047857, 0 0 0 3px rgb(255 255 255 / 0.5);
+  outline: 1px dashed #047857; outline-offset: -5px;
+}
+.banknote-value {
+  flex: 1; text-align: center; font: 900 18px ui-monospace, monospace; color: #052e16;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55); letter-spacing: 0.02em;
+}
+
+/* F1-style timing tower on the left of the TV screen */
+.tower { background: rgb(9 9 11 / 0.82); backdrop-filter: blur(3px); box-shadow: 0 4px 14px rgb(0 0 0 / 0.55); border: 1px solid rgb(255 255 255 / 0.12); }
+.tower-head { background: linear-gradient(90deg, #dc2626, #991b1b); }
+
+/* sound toggle: round brass button, like the chips and trophy plates */
+.sound-btn {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px;
+  color: #451a03; background: radial-gradient(circle at 35% 30%, #fff7cc, #fbbf24 50%, #b45309);
+  box-shadow: 0 0 0 2px #78350f, inset 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 5px rgb(0 0 0 / 0.5);
+  transition: transform 0.1s, filter 0.2s;
+}
+.sound-btn:hover { transform: translateY(-1px); }
+.sound-btn:active { transform: scale(0.94); }
+.sound-btn[aria-pressed="false"] { filter: grayscale(0.85) brightness(0.8); }
+.sound-btn:focus-visible { outline: 2px solid #fcd34d; outline-offset: 2px; }
+
+/* daily bonus gift button: red present with gold ribbon, gently bouncing to draw attention */
+.gift-btn {
+  display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 10px; border-radius: 8px;
+  font-weight: 800; font-size: 13px; color: #fff7ed;
+  background: linear-gradient(90deg, transparent 15px, #fbbf24 15px 21px, transparent 21px), linear-gradient(#ef4444, #b91c1c);
+  box-shadow: 0 0 0 2px #7f1d1d, 0 2px 6px rgb(0 0 0 / 0.5);
+  animation: gift 1.6s ease-in-out infinite;
+}
+@keyframes gift { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-2px) rotate(-3deg); } }
+
+/* Seu Zé tip button: chalk-on-wood sign */
+.tip-btn {
+  border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 700; color: #fef3c7;
+  background: rgb(28 25 23 / 0.75); border: 1px dashed rgb(253 230 138 / 0.6);
+}
+.tip-btn:hover:not(:disabled) { background: rgb(28 25 23 / 0.95); color: #fff; }
+.tip-btn:disabled { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) { .gift-btn { animation: none; } }
+
+/* night race: dark sky tint with four floodlight cones from the top */
+.night {
+  background:
+    radial-gradient(ellipse 14% 95% at 12% -5%, rgb(255 248 220 / 0.30), transparent 70%),
+    radial-gradient(ellipse 14% 95% at 38% -5%, rgb(255 248 220 / 0.30), transparent 70%),
+    radial-gradient(ellipse 14% 95% at 62% -5%, rgb(255 248 220 / 0.30), transparent 70%),
+    radial-gradient(ellipse 14% 95% at 88% -5%, rgb(255 248 220 / 0.30), transparent 70%),
+    rgb(8 12 35 / 0.62);
+}
+
+/* player level: gold star with the level number, title and XP bar */
+.level-badge { padding: 3px 10px 3px 4px; border-radius: 9999px; background: rgb(0 0 0 / 0.35); border: 1px solid rgb(251 191 36 / 0.35); }
+.level-star {
+  display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  font: 900 12px system-ui, sans-serif; color: #451a03;
+  background: linear-gradient(#fde68a, #f59e0b);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}

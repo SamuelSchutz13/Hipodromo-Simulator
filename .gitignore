@@ -1,0 +1,7 @@
+# build output and local player progress
+backend/corrida.exe
+backend/corrida
+backend/save.json
+backend/save.json.tmp
+frontend/node_modules/
+frontend/dist/

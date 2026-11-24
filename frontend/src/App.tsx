@@ -139,6 +139,7 @@ export default function App() {
   const [tip, setTip] = useState<string | null>(null) // Seu Zé's reason for his suggested horse
   const [slowmo, setSlowmo] = useState(false) // photo-finish slow motion is playing
   const raf = useRef(0)
+  const prevRankRef = useRef<number[]>([]) // last live order shown in the tower
   const speedRef = useRef(1)
   const busy = running || countdown !== null
   const needed = picksNeeded[betType]
@@ -397,7 +398,19 @@ export default function App() {
   // While racing (and right after), the track shows the race that ran, not the next race card.
   const shown: RaceInfo | null = (busy || result) && bet ? bet.race : race
   const betIds = (busy || result) && bet ? bet.picks.map((p) => p.id) : []
-  const ranking = positions && shown ? [...shown.horses].sort((x, y) => positions[y.id] - positions[x.id]) : null
+  // Live order with hysteresis: horses within 1.5 m keep their previous order, so two horses running
+  // neck and neck don't swap rows every frame (the tower's slide animation would never settle).
+  const prevRank = prevRankRef.current
+  const ranking =
+    positions && shown
+      ? [...shown.horses].sort((x, y) => {
+          const d = positions[y.id] - positions[x.id]
+          return Math.abs(d) < 1.5 && prevRank.includes(x.id) && prevRank.includes(y.id)
+            ? prevRank.indexOf(x.id) - prevRank.indexOf(y.id)
+            : d
+        })
+      : null
+  prevRankRef.current = ranking ? ranking.map((h) => h.id) : []
   const towerTitle = running ? "AO VIVO" : result && !busy ? "RESULTADO" : "GRID · ODDS"
   const towerRows: TowerRow[] = !shown
     ? []

@@ -1,12 +1,18 @@
 import { type Horse, Silk } from "@/components/track"
 import { cn } from "@/lib/utils"
 
-export type BetType = "win" | "place" | "dupla"
-export const typeLabel = { win: "Vencedor", place: "Placê", dupla: "Dupla" }
+export type BetType = "win" | "place" | "dupla" | "exata" | "trifeta"
+export const BET_TYPES: BetType[] = ["win", "place", "dupla", "exata", "trifeta"]
+export const typeLabel = { win: "Vencedor", place: "Placê", dupla: "Dupla", exata: "Exata", trifeta: "Trifeta" }
+// horses each bet needs; exata and trifeta are in the order clicked (1st, 2nd, 3rd)
+export const picksNeeded: Record<BetType, number> = { win: 1, place: 1, dupla: 2, exata: 2, trifeta: 3 }
+export const isOrdered = (t: BetType) => t === "exata" || t === "trifeta"
 const typeHelp = {
   win: "Ganha se o cavalo chegar em 1º.",
   place: "Ganha se chegar em 1º ou 2º. Odd menor, mais chance.",
   dupla: "Escolha 2 cavalos: ganha se forem 1º e 2º, em qualquer ordem.",
+  exata: "Escolha o 1º e depois o 2º, nessa ordem exata.",
+  trifeta: "Escolha o 1º, o 2º e o 3º, nessa ordem. Difícil, mas paga muito!",
 }
 // Money from the server is in centavos.
 export const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
@@ -53,7 +59,10 @@ function bookieLine(p: Props) {
   if (p.tip) return p.tip
   if (p.balance < 1) return "Ih, a carteira secou. Recarrega lá em cima!"
   if (p.picks.length === 0) return "Chega mais! Escolhe teu cavalo ali no estábulo."
-  if (p.picks.length < p.needed) return "Falta mais um pra fechar a dupla!"
+  if (p.picks.length < p.needed)
+    return isOrdered(p.betType)
+      ? `Agora escolhe quem chega em ${p.picks.length + 1}º!`
+      : "Falta mais um pra fechar a dupla!"
   if (p.odds && p.odds >= 10) return `Zebra, hein? Tá pagando ${p.odds.toFixed(2)}! 🦓`
   if (p.odds) return `${p.picks.map((h) => h.name).join(" e ")} tá pagando ${p.odds.toFixed(2)}. Vai?`
   return "Faça sua fé!"
@@ -101,7 +110,7 @@ export function BettingBooth(p: Props) {
         ) : (
           <div className="space-y-3 rounded-md bg-stone-950/70 p-3">
             <div className="grid grid-cols-3 gap-1 rounded-lg bg-black/40 p-1">
-              {(["win", "place", "dupla"] as const).map((t) => (
+              {BET_TYPES.map((t) => (
                 <button
                   key={t}
                   onClick={() => p.onType(t)}
@@ -120,8 +129,9 @@ export function BettingBooth(p: Props) {
 
             {p.picks.length > 0 && (
               <div className="space-y-1">
-                {p.picks.map((h) => (
+                {p.picks.map((h, i) => (
                   <div key={h.id} className="flex items-center gap-2 text-sm">
+                    {isOrdered(p.betType) && <span className="w-6 font-mono font-black text-amber-400">{i + 1}º</span>}
                     <Silk color={h.color} n={h.id + 1} />
                     <span className="flex-1 truncate">{h.name}</span>
                   </div>
@@ -201,9 +211,9 @@ function TicketView({ t }: { t: Ticket }) {
         <span>Tipo</span>
         <span>{typeLabel[t.type]}</span>
       </div>
-      {t.picks.map((h) => (
+      {t.picks.map((h, i) => (
         <div key={h.id} className="flex justify-between gap-2">
-          <span>Cavalo {h.id + 1}</span>
+          <span className="shrink-0">{isOrdered(t.type) ? `${i + 1}º lugar` : `Cavalo ${h.id + 1}`}</span>
           <span className="truncate">{h.name}</span>
         </div>
       ))}

@@ -426,3 +426,30 @@
   background: linear-gradient(#fde68a, #f59e0b);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
 }
+
+/* minimap on the TV: whole track as a thin bar with one dot per horse */
+.minimap {
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.15), rgb(255 255 255 / 0.15)) center / 100% 2px no-repeat,
+    linear-gradient(90deg, transparent calc(100% - 3px), #fff calc(100% - 3px)), rgb(0 0 0 / 0.65);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+/* Grande Prêmio: gold TV bezel */
+.tv-gp {
+  background: linear-gradient(#a16207, #422006); border-color: #fbbf24;
+  box-shadow: 0 0 0 2px #fbbf24, 0 0 28px rgb(251 191 36 / 0.35);
+}
+
+/* daily missions clipboard */
+.clipboard {
+  background: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.06) 0 2px, transparent 2px 18px), linear-gradient(#8b5a2b, #6b3f1d);
+  border: 2px solid #3b2410;
+}
+.clip {
+  background: linear-gradient(#e4e4e7, #71717a); border: 1px solid #3f3f46;
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.6), 0 2px 3px rgb(0 0 0 / 0.5);
+}
+.paper {
+  background: repeating-linear-gradient(transparent 0 23px, rgb(59 130 246 / 0.12) 23px 24px), #fdfcf7;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.4);
+}

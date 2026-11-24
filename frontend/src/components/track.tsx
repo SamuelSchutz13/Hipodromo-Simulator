@@ -1,20 +1,27 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export type Horse = {
-  id: number
+  id: number // lane
+  rosterId: number
   name: string
-  color: string
+  color: string // jockey silk
   coat: string
+  jockey: string
+  jockeyStars: number
+  form: number[] | null // last finishing positions, most recent first
   odds: number
   placeOdds: number
   mudder: boolean
   specialist: boolean
+  pref: string // the specialist's favourite surface
   stayer: boolean
 }
 
-// Horse nose position on the track: from 92px (start gate) to 94% (finish line).
-const trackX = (frac: number) => `calc(92px + (94% - 92px) * ${frac})`
+// The track is longer than the screen: 1 m = PX pixels, and a camera follows the leader.
+const PX = 1.8
+const START = 92 // pixels before the start line, where the gates are
+const trackX = (metres: number) => START + metres * PX
 
 // Colour of what the hooves kick up, by surface and ground.
 function dustColor(surface: string, going: string) {
@@ -88,23 +95,40 @@ export function Track({
 }) {
   const marks = Array.from({ length: Math.floor(distance / 200) - 1 }, (_, i) => (i + 1) * 200)
   const dust = dustColor(surface, going)
+  const view = useRef<HTMLDivElement>(null)
+  const [viewW, setViewW] = useState(800)
+  useEffect(() => {
+    const ro = new ResizeObserver(([e]) => setViewW(e.contentRect.width))
+    ro.observe(view.current!)
+    return () => ro.disconnect()
+  }, [])
+  const worldW = trackX(distance) + 140
+  const lead = positions ? Math.max(...positions) : 0
+  // Camera keeps the leader at 60% of the screen, clamped to the ends of the track.
+  const cam = Math.max(0, Math.min(trackX(lead) - viewW * 0.6, worldW - viewW))
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-lg border-x-4 border-x-amber-900/60",
-        `surf-${surface}-${going}`,
-      )}
-    >
+    <div ref={view} className="relative overflow-hidden rounded-lg border-x-4 border-x-amber-900/60">
+      {going !== "seca" && <div className={cn("rain pointer-events-none absolute inset-0 z-10", going === "pesada" && "rain-heavy")} />}
+      {/* minimap: where every horse is on the whole track, since the camera only shows part of it */}
+      <div className="minimap absolute right-2 bottom-1 z-20 h-3 w-44 rounded-full" aria-hidden>
+        {horses.map((h) => (
+          <span
+            key={h.id}
+            className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-1 ring-white"
+            style={{ left: `${((positions?.[h.id] ?? 0) / distance) * 100}%`, background: h.color }}
+          />
+        ))}
+      </div>
+      <div className={cn("relative", `surf-${surface}-${going}`)} style={{ width: worldW, transform: `translateX(${-cam}px)` }}>
       {/* night: darkened track under floodlights; sits below the horses so they stay lit */}
       {night && <div className="night pointer-events-none absolute inset-0 z-[4]" />}
-      {going !== "seca" && <div className={cn("rain pointer-events-none absolute inset-0 z-10", going === "pesada" && "rain-heavy")} />}
       {marks.map((d) => (
-        <div key={d} className="absolute top-0 bottom-0 border-l border-dashed border-white/30" style={{ left: trackX(d / distance) }}>
+        <div key={d} className="absolute top-0 bottom-0 border-l border-dashed border-white/30" style={{ left: trackX(d) }}>
           <span className="absolute top-3 left-1 font-mono text-[10px] text-white/70">{distance - d}m</span>
         </div>
       ))}
       <div className="absolute top-0 bottom-0 w-px bg-white/60" style={{ left: trackX(0) }} />
-      <div className="finish-line absolute top-0 bottom-0 w-2.5" style={{ left: trackX(1) }} />
+      <div className="finish-line absolute top-0 bottom-0 w-2.5" style={{ left: trackX(distance) }} />
       <div className="rail h-2.5" aria-hidden />
       {horses.map((h) => {
         const p = positions?.[h.id] ?? 0
@@ -118,7 +142,7 @@ export function Track({
             <div className="gate absolute top-1 bottom-1" style={{ left: "18px", width: "74px" }} aria-hidden>
               <span className={cn("gate-door", positions && "gate-open")} />
             </div>
-            <div className="absolute top-1/2 z-[5] -translate-x-full -translate-y-1/2" style={{ left: trackX(p / distance) }}>
+            <div className="absolute top-1/2 z-[5] -translate-x-full -translate-y-1/2" style={{ left: trackX(p) }}>
               {moving && (
                 <span className="absolute bottom-0 left-1" aria-hidden>
                   {[0, 1, 2].map((k) => (
@@ -132,6 +156,7 @@ export function Track({
         )
       })}
       <div className="rail h-2.5" aria-hidden />
+      </div>
     </div>
   )
 }

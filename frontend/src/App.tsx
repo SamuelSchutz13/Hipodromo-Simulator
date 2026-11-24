@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { BettingBooth, type BetType, brl, typeLabel } from "@/components/booth"
+import { BettingBooth, type BetType, brl, isOrdered, picksNeeded, typeLabel } from "@/components/booth"
 import { HistoryBoard } from "@/components/board"
+import { type Mission, MissionBoard } from "@/components/missions"
 import { Stable } from "@/components/stable"
 import { TimingTower, type TowerRow } from "@/components/tower"
 import { ACHIEVEMENTS, TrophyCase } from "@/components/trophies"
@@ -8,7 +9,17 @@ import { Confetti, type Horse, Silk, Track } from "@/components/track"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { isMuted, setMuted, sounds, speak, startHooves, stopHooves } from "@/lib/sound"
+import {
+  isMusicOn,
+  isMuted,
+  setMusicMode,
+  setMusicOn,
+  setMuted,
+  sounds,
+  speak,
+  startHooves,
+  stopHooves,
+} from "@/lib/sound"
 import { cn } from "@/lib/utils"
 
 type HistoryItem = { race: number; horse: string; type: BetType; amount: number; payout: number }
@@ -24,12 +35,16 @@ type Stats = {
   achievements: string[] | null
   xp: number
 }
-type RaceInfo = { horses: Horse[]; going: string; surface: string; distance: number; night: boolean }
+type RaceInfo = { horses: Horse[]; going: string; surface: string; distance: number; night: boolean; gp: boolean }
 type RaceState = RaceInfo & {
   raceId: number
   duplaOdds: Record<string, number>
+  exataOdds: Record<string, number>
+  trifetaOdds: Record<string, number>
   balance: number
   stats: Stats
+  missions: Mission[] | null
+  nextGP: number // races until the Grande Prêmio; 0 = this one
   bonusAvailable: boolean
   bonusAmount: number
 }
@@ -45,6 +60,8 @@ type BetResult = {
   unlocked: string[] | null
   levelUp: number
   levelReward: number
+  missionsDone: string[] | null
+  missionReward: number
 }
 type Bet ={ raceId: number; picks: Horse[]; amount: number; odds: number; type: BetType; race: RaceInfo }
 
@@ -70,6 +87,17 @@ function finishRows(r: BetResult, info: RaceInfo): TowerRow[] {
   }))
 }
 const duplaKey = (a: number, b: number) => `${Math.min(a, b)}-${Math.max(a, b)}`
+
+// Odds for the current picks, or null until the bet type has all the horses it needs.
+function oddsFor(race: RaceState | null, type: BetType, picks: Horse[]) {
+  if (!race || picks.length !== picksNeeded[type]) return null
+  const [a, b, c] = picks.map((p) => p.id)
+  if (type === "win") return picks[0].odds
+  if (type === "place") return picks[0].placeOdds
+  if (type === "dupla") return race.duplaOdds[duplaKey(a, b)]
+  if (type === "exata") return race.exataOdds[`${a}>${b}`]
+  return race.trifetaOdds[`${a}>${b}>${c}`]
+}
 const surfaceLabel: Record<string, string> = { grama: "🌿 Grama", areia: "🏖️ Areia", terra: "🟫 Terra" }
 const goingLabel: Record<string, string> = { seca: "☀️ Seca", molhada: "🌦️ Molhada", pesada: "🌧️ Pesada" }
 const groundBadges = (r: RaceInfo) => [
@@ -106,21 +134,15 @@ export default function App() {
   const [muted, setMutedState] = useState(isMuted())
   const [confetti, setConfetti] = useState(0) // bump to fire a new burst
   const [toasts, setToasts] = useState<string[]>([])
-  const [notice, setNotice] = useState("") // short toast, e.g. daily bonus credited
+  const [notices, setNotices] = useState<{ id: number; text: string }[]>([]) // short toasts (bonus, missions, level)
+  const [music, setMusicState] = useState(isMusicOn())
   const [tip, setTip] = useState<string | null>(null) // Seu Zé's reason for his suggested horse
   const [slowmo, setSlowmo] = useState(false) // photo-finish slow motion is playing
   const raf = useRef(0)
   const speedRef = useRef(1)
   const busy = running || countdown !== null
-  const needed = betType === "dupla" ? 2 : 1
-  const odds =
-    picks.length !== needed || !race
-      ? null
-      : betType === "dupla"
-        ? race.duplaOdds[duplaKey(picks[0].id, picks[1].id)]
-        : betType === "win"
-          ? picks[0].odds
-          : picks[0].placeOdds
+  const needed = picksNeeded[betType]
+  const odds = oddsFor(race, betType, picks)
 
   const load = () =>
     fetch("/api/race")
@@ -130,11 +152,21 @@ export default function App() {
 
   useEffect(() => {
     load()
+    // Browsers only allow audio after a user gesture: start the lobby music on the first click.
+    const unlock = () => setMusicMode("lobby")
+    window.addEventListener("pointerdown", unlock, { once: true })
     return () => {
       cancelAnimationFrame(raf.current)
       stopHooves()
+      setMusicMode(null)
+      window.removeEventListener("pointerdown", unlock)
     }
   }, [])
+
+  function toggleMusic() {
+    setMusicOn(!music)
+    setMusicState(!music)
+  }
 
   function toggleSpeed() {
     speedRef.current = speedRef.current === 1 ? 2 : 1
@@ -149,14 +181,14 @@ export default function App() {
   function chooseType(t: BetType) {
     setBetType(t)
     setTip(null)
-    setPicks((p) => p.slice(0, t === "dupla" ? 2 : 1))
+    setPicks((p) => p.slice(0, picksNeeded[t]))
   }
 
   function pick(h: Horse) {
     setTip(null)
-    if (betType !== "dupla") return setPicks([h])
-    // Dupla: click toggles; a third pick replaces the oldest.
-    setPicks((p) => (p.some((x) => x.id === h.id) ? p.filter((x) => x.id !== h.id) : [...p, h].slice(-2)))
+    if (needed === 1) return setPicks([h])
+    // Multi-horse bets: click toggles; picks keep the click order (1st, 2nd, 3rd); an extra pick drops the oldest.
+    setPicks((p) => (p.some((x) => x.id === h.id) ? p.filter((x) => x.id !== h.id) : [...p, h].slice(-needed)))
   }
 
   // Replays the server-decided race frame by frame, with live commentary. Resolves when the race ends.
@@ -168,6 +200,7 @@ export default function App() {
       setRunning(true)
       sounds.bell()
       startHooves()
+      setMusicMode("race")
       const say = (msg: string) => {
         setCalls([msg])
         speak(msg)
@@ -229,6 +262,7 @@ export default function App() {
         )
         stopHooves()
         sounds.crowd()
+        setMusicMode("lobby")
         setSlowmo(false)
         setRunning(false)
         done()
@@ -248,6 +282,7 @@ export default function App() {
         raceId: race.raceId,
         horseId: picks[0].id,
         horse2: picks[1]?.id ?? 0,
+        horse3: picks[2]?.id ?? 0,
         amount: cents,
         type: betType,
       }),
@@ -263,6 +298,7 @@ export default function App() {
       surface: race.surface,
       distance: race.distance,
       night: race.night,
+      gp: race.gp,
     }
     setBet({ raceId: race.raceId, picks, amount: cents, odds, type: betType, race: info })
     setPicks([]) // the booth now shows the printed ticket
@@ -289,10 +325,15 @@ export default function App() {
       setToasts(r.unlocked)
       setTimeout(() => setToasts([]), 5000)
     }
+    for (const m of r.missionsDone ?? []) {
+      showNotice(`📋 Missão cumprida: ${m}! +${brl(r.missionReward / (r.missionsDone?.length ?? 1))}`)
+    }
     if (r.levelUp) {
+      showNotice(`⭐ Nível ${r.levelUp}: ${levelTitle(r.levelUp)}! Prêmio de ${brl(r.levelReward)}`)
+    }
+    if (r.levelUp || r.missionsDone?.length) {
       sounds.coin()
       setConfetti((c) => c + 1)
-      showNotice(`⭐ Nível ${r.levelUp}: ${levelTitle(r.levelUp)}! Prêmio de ${brl(r.levelReward)}`)
     }
     load()
   }
@@ -316,9 +357,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey)
   })
 
-  function showNotice(msg: string) {
-    setNotice(msg)
-    setTimeout(() => setNotice(""), 3500)
+  function showNotice(text: string) {
+    const id = Date.now() + Math.random()
+    setNotices((n) => [...n, { id, text }])
+    setTimeout(() => setNotices((n) => n.filter((x) => x.id !== id)), 4500)
   }
 
   async function claimBonus() {
@@ -336,7 +378,7 @@ export default function App() {
   function giveTip() {
     if (!race) return
     const fits = (h: Horse) =>
-      (h.mudder && race.going !== "seca") || (h.stayer && race.distance >= 1200) || h.specialist
+      (h.mudder && race.going !== "seca") || (h.stayer && race.distance >= 1200) || (h.specialist && h.pref === race.surface)
     const best = [...race.horses].sort((x, y) => (fits(y) ? 1.35 : 1) / y.odds - (fits(x) ? 1.35 : 1) / x.odds)[0]
     const odd = best.odds.toFixed(2)
     setBetType("win")
@@ -346,7 +388,7 @@ export default function App() {
         ? `Com essa pista ${race.going}, o ${best.name} que gosta de lama é boa pedida! Paga ${odd}.`
         : best.stayer && race.distance >= 1200
           ? `${race.distance} m é chão! O ${best.name} tem fôlego de sobra. Paga ${odd}.`
-          : best.specialist
+          : best.specialist && best.pref === race.surface
             ? `O ${best.name} conhece essa ${race.surface} como ninguém. Paga ${odd}.`
             : `Vai no ${best.name}, tá bem cotado e paga ${odd}.`,
     )
@@ -376,11 +418,11 @@ export default function App() {
       {confetti > 0 && <Confetti key={confetti} />}
 
       <div className="fixed right-4 bottom-4 z-50 space-y-2" aria-live="polite">
-        {notice && (
-          <div className="animate-in slide-in-from-right fade-in rounded-lg border border-emerald-500/50 bg-card p-3 font-semibold shadow-xl">
-            {notice}
+        {notices.map((n) => (
+          <div key={n.id} className="animate-in slide-in-from-right fade-in rounded-lg border border-emerald-500/50 bg-card p-3 font-semibold shadow-xl">
+            {n.text}
           </div>
-        )}
+        ))}
         {toasts.map((id) => (
           <div key={id} className="animate-in slide-in-from-right fade-in flex items-center gap-3 rounded-lg border border-amber-500/50 bg-card p-3 shadow-xl">
             <span className="text-3xl">{ACHIEVEMENTS[id]?.icon}</span>
@@ -401,6 +443,14 @@ export default function App() {
           <div className="flex items-center gap-3">
             {stats && stats.streak >= 2 && <Badge className="bg-orange-600 text-white">🔥 {stats.streak} seguidas</Badge>}
             {stats && <LevelBadge xp={stats.xp ?? 0} />}
+            <button onClick={toggleMusic} className="sound-btn" aria-label={music ? "Desligar música" : "Ligar música"} aria-pressed={music}>
+              <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+                <path d="M9 17V6l10-2v11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <circle cx="7" cy="17" r="2.6" fill="currentColor" />
+                <circle cx="17" cy="15" r="2.6" fill="currentColor" />
+                {!music && <path d="M4 4l16 16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />}
+              </svg>
+            </button>
             <button onClick={toggleMute} className="sound-btn" aria-label={muted ? "Ligar som" : "Desligar som"} aria-pressed={!muted}>
               <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
                 <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
@@ -435,11 +485,14 @@ export default function App() {
       <main className="mx-auto grid max-w-6xl gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
           <section aria-label="Transmissão da corrida">
-            <div className="tv rounded-2xl p-3 pb-2 shadow-2xl">
+            <div className={cn("tv rounded-2xl p-3 pb-2 shadow-2xl", shown?.gp && "tv-gp")}>
               <div className="tv-screen relative overflow-hidden rounded-lg bg-black">
                 {/* broadcast top bar: channel logo and live clock, kept off the lanes */}
                 <div className="flex h-7 items-center justify-between bg-zinc-950 px-3 font-mono text-xs text-white">
-                  <span className="font-sans text-[11px] font-black tracking-wider">🐎 HV ESPORTES</span>
+                  <span className="font-sans text-[11px] font-black tracking-wider">
+                    🐎 HV ESPORTES
+                    {shown?.gp && <span className="ml-2 rounded bg-amber-400 px-1.5 text-stone-900">🏆 GRANDE PRÊMIO</span>}
+                  </span>
                   <span className="flex items-center gap-1.5">
                     {running ? (
                       <>
@@ -498,10 +551,15 @@ export default function App() {
                     shown && (
                       <>
                         <span className="shrink-0 rounded bg-amber-400 px-1.5 text-xs font-black text-stone-900">
-                          PÁREO #{race?.raceId ?? "…"}
+                          {shown.gp ? "🏆 GRANDE PRÊMIO" : `PÁREO #${race?.raceId ?? "…"}`}
                         </span>
                         <span className="truncate">
-                          {shown.distance} m · {groundBadges(shown).join(" · ")} · apostas abertas no guichê
+                          {shown.distance} m · {groundBadges(shown).join(" · ")} ·{" "}
+                          {shown.gp
+                            ? `${shown.horses.length} cavalos · odds sem margem · XP em dobro`
+                            : race?.nextGP
+                              ? `Grande Prêmio em ${race.nextGP} páreo${race.nextGP > 1 ? "s" : ""}`
+                              : "apostas abertas no guichê"}
                         </span>
                       </>
                     )
@@ -533,7 +591,8 @@ export default function App() {
               horses={race.horses}
               surface={race.surface}
               picked={picks.map((p) => p.id)}
-              highlight={betType}
+              betType={betType}
+              gp={race.gp}
               disabled={busy}
               onPick={pick}
             />
@@ -561,6 +620,8 @@ export default function App() {
             tip={tip}
             onTip={giveTip}
           />
+
+          {race?.missions?.length ? <MissionBoard missions={race.missions} /> : null}
 
           {stats && stats.bets > 0 && (
             <Card>
@@ -618,7 +679,7 @@ function LevelBadge({ xp }: { xp: number }) {
 
 function Podium({ result, bet, onReplay }: { result: BetResult; bet: Bet; onReplay: () => void }) {
   const horse = (id: number) => bet.race.horses.find((h) => h.id === id)!
-  const names = bet.picks.map((p) => p.name).join(" + ")
+  const names = bet.picks.map((p) => p.name).join(isOrdered(bet.type) ? " → " : " + ")
   return (
     <div className={cn("mt-4 rounded-lg border p-4", result.won ? "border-emerald-500 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10")}>
       <p className="mb-3 text-center text-lg font-semibold">

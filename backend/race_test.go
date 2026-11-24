@@ -28,7 +28,8 @@ func TestRaceAndBet(t *testing.T) {
 	for _, bad := range []betRequest{
 		{RaceID: 1, HorseID: 0, Amount: startBalance + 1, Type: "win"},
 		{RaceID: 1, HorseID: 99, Amount: 10, Type: "win"},
-		{RaceID: 1, HorseID: 0, Amount: 10, Type: "trifeta"},
+		{RaceID: 1, HorseID: 0, Amount: 10, Type: "quadrifeta"},
+		{RaceID: 1, HorseID: 0, Horse2: 0, Horse3: 1, Amount: 10, Type: "trifeta"},
 		{RaceID: 1, HorseID: 0, Amount: 0, Type: "win"},
 	} {
 		if _, err := g.placeBet(bad); err == "" {
@@ -52,7 +53,7 @@ func TestRaceAndBet(t *testing.T) {
 			}
 		}
 	}
-	want := startBalance - 10 + resp.LevelReward // a long-shot win can level up straight away
+	want := startBalance - 10 + resp.LevelReward + resp.MissionReward // a long-shot win can level up straight away
 	if resp.Won {
 		want += payout(10, odds)
 	}
@@ -76,7 +77,7 @@ func TestPlaceBetPaysTopTwo(t *testing.T) {
 		if resp.Won != slices.Contains(resp.Order[:2], 0) {
 			t.Fatalf("corrida %d: placê won=%v com ordem %v", i, resp.Won, resp.Order)
 		}
-		if resp.Won && g.Balance != before-100+payout(100, odds)+resp.LevelReward {
+		if resp.Won && g.Balance != before-100+payout(100, odds)+resp.LevelReward+resp.MissionReward {
 			t.Fatalf("pagamento errado do placê")
 		}
 	}
@@ -141,7 +142,7 @@ func TestDupla(t *testing.T) {
 		}
 		if want {
 			wins++
-			if g.Balance != before-100+payout(100, odds)+resp.LevelReward {
+			if g.Balance != before-100+payout(100, odds)+resp.LevelReward+resp.MissionReward {
 				t.Fatal("pagamento errado da dupla")
 			}
 		}
@@ -153,7 +154,7 @@ func TestRaceVariety(t *testing.T) {
 	rng := rand.New(rand.NewPCG(3, 4))
 	seen := map[string]bool{}
 	for range 40 {
-		r := newRace(rng)
+		r := newRace(rng, newRoster(7), 1)
 		seen[r.Surface] = true
 		seen[r.Going] = true
 		seen[fmt.Sprint(r.Distance)] = true
@@ -184,8 +185,9 @@ func TestPayoutInCentavos(t *testing.T) {
 
 func TestOneTraitPerHorseEvenlySpread(t *testing.T) {
 	rng := rand.New(rand.NewPCG(5, 6))
-	for range 20 {
-		r := newRace(rng)
+	roster := newRoster(11)
+	for id := 1; id <= 20; id++ {
+		r := newRace(rng, roster, id)
 		count := [3]int{}
 		for _, h := range r.Horses {
 			n := 0
@@ -199,8 +201,13 @@ func TestOneTraitPerHorseEvenlySpread(t *testing.T) {
 				t.Fatalf("%s tem %d características, esperado 1", h.Name, n)
 			}
 		}
-		if count != [3]int{2, 2, 2} {
-			t.Fatalf("distribuição desigual (lama, superfície, fôlego) = %v", count)
+		// 2/2/2 in a normal race, 3/3/2 (any order) in the 8-horse Grande Prêmio
+		want := []int{2, 2, 2}
+		if r.GP {
+			want = []int{2, 3, 3}
+		}
+		if got := slices.Sorted(slices.Values(count[:])); !slices.Equal(got, want) {
+			t.Fatalf("corrida %d: distribuição desigual (lama, superfície, fôlego) = %v", id, count)
 		}
 	}
 }
@@ -235,7 +242,116 @@ func TestLevels(t *testing.T) {
 	if resp.LevelUp != 2 || resp.LevelReward != levelReward*2 {
 		t.Fatalf("subida de nível errada: %+v", resp.LevelUp)
 	}
-	if g.Balance != 1_000_000-100+resp.Payout+levelReward*2 {
+	if g.Balance != 1_000_000-100+resp.Payout+levelReward*2+resp.MissionReward {
 		t.Fatalf("prêmio de nível não creditado: saldo %d", g.Balance)
+	}
+}
+
+func TestExataAndTrifeta(t *testing.T) {
+	g := newGame("")
+	g.Balance = 10_000_000
+	for i := range 40 {
+		kind, picks := "exata", []int{0, 1}
+		odds := g.race.Exata[exataKey(0, 1)]
+		if i%2 == 1 {
+			kind, picks = "trifeta", []int{2, 0, 1}
+			odds = g.race.Trifeta[trifetaKey(2, 0, 1)]
+		}
+		before := g.Balance
+		resp, err := g.placeBet(betRequest{RaceID: g.RaceID, HorseID: picks[0], Horse2: picks[1], Horse3: 1, Amount: 100, Type: kind})
+		if err != "" {
+			t.Fatal(err)
+		}
+		if want := slices.Equal(resp.Order[:len(picks)], picks); resp.Won != want {
+			t.Fatalf("%s %v won=%v com ordem %v", kind, picks, resp.Won, resp.Order)
+		}
+		want := before - 100 + resp.LevelReward + resp.MissionReward
+		if resp.Won {
+			want += payout(100, odds)
+		}
+		if g.Balance != want {
+			t.Fatalf("%s: saldo %d, esperado %d", kind, g.Balance, want)
+		}
+	}
+	n := len(g.race.Horses)
+	if len(g.race.Exata) != n*(n-1) || len(g.race.Trifeta) != n*(n-1)*(n-2) {
+		t.Fatalf("combinações erradas: exata %d, trifeta %d", len(g.race.Exata), len(g.race.Trifeta))
+	}
+}
+
+func TestRosterAndFormSurviveRestart(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "save.json")
+	g := newGame(path)
+	traits := [3]int{}
+	names := map[string]bool{}
+	for _, p := range g.roster {
+		traits[p.Trait]++
+		names[p.Name] = true
+	}
+	if traits != [3]int{10, 10, 10} || len(names) != rosterSize {
+		t.Fatalf("elenco errado: características %v, %d nomes únicos", traits, len(names))
+	}
+	entered := g.race.Horses
+	resp, err := g.placeBet(betRequest{RaceID: 1, HorseID: 0, Amount: 10, Type: "win"})
+	if err != "" {
+		t.Fatal(err)
+	}
+	for pos, id := range resp.Order {
+		if f := g.Form[entered[id].Roster]; len(f) == 0 || f[0] != pos+1 {
+			t.Fatalf("%s chegou em %dº mas a ficha diz %v", entered[id].Name, pos+1, f)
+		}
+	}
+	g.save()
+	g2 := newGame(path)
+	if g2.RosterSeed != g.RosterSeed || g2.roster[7].Name != g.roster[7].Name || len(g2.Form) != len(g.Form) {
+		t.Fatal("elenco ou ficha não sobreviveram ao reinício")
+	}
+}
+
+func TestGrandPrix(t *testing.T) {
+	rng := rand.New(rand.NewPCG(8, 9))
+	r := newRace(rng, newRoster(3), gpEvery)
+	if !r.GP || len(r.Horses) != 8 || r.Distance != gpDistance || len(r.Trifeta) != 8*7*6 {
+		t.Fatalf("GP errado: gp=%v cavalos=%d distância=%v", r.GP, len(r.Horses), r.Distance)
+	}
+	silks := map[string]bool{}
+	inv := 0.0
+	for _, h := range r.Horses {
+		silks[h.Color] = true
+		inv += 1 / h.Odds
+	}
+	if len(silks) != 8 {
+		t.Fatal("dois cavalos com o mesmo jóquei")
+	}
+	// no house margin: sum of 1/odds ≈ 1 (a bit less because of rounding and the 1.05 floor)
+	if inv < 0.93 || inv > 1.03 {
+		t.Fatalf("GP deveria ter odds justas, soma 1/odds = %.3f", inv)
+	}
+	if newRace(rng, newRoster(3), gpEvery+1).GP {
+		t.Fatal("páreo seguinte não deveria ser GP")
+	}
+}
+
+func TestMissions(t *testing.T) {
+	g := newGame("")
+	if !g.ensureMissions("2026-11-24") || g.ensureMissions("2026-11-24") {
+		t.Fatal("missões deveriam ser sorteadas só uma vez por dia")
+	}
+	if len(g.Missions.List) != missionsPerDay {
+		t.Fatalf("esperava %d missões, veio %d", missionsPerDay, len(g.Missions.List))
+	}
+	g.Missions.List = []Mission{{ID: "bets3", Text: "Faça 3 apostas", Goal: 3}, {ID: "night", Text: "Noturna", Goal: 1}}
+	day := &Race{}
+	for i := range 3 {
+		done := g.progressMissions(betOutcome{kind: "win", race: day})
+		if (i == 2) != (len(done) == 1) {
+			t.Fatalf("aposta %d: missões concluídas %v", i+1, done)
+		}
+	}
+	if done := g.progressMissions(betOutcome{kind: "win", race: &Race{Night: true}}); len(done) != 1 || done[0] != "Noturna" {
+		t.Fatalf("missão noturna não concluiu: %v", done)
+	}
+	if done := g.progressMissions(betOutcome{kind: "win", race: &Race{Night: true}}); len(done) != 0 {
+		t.Fatal("missão concluída contou de novo")
 	}
 }

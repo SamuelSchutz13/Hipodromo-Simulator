@@ -15,13 +15,15 @@ export const ACHIEVEMENTS: Record<string, { icon: string; title: string; desc: s
   marathon: { icon: "🏃", title: "Fundista", desc: "Ganhe uma corrida de 1600 m" },
   all_tracks: { icon: "🗺️", title: "Pé em todo chão", desc: "Ganhe na grama, na areia e na terra" },
   regular: { icon: "🎟️", title: "Frequentador", desc: "Faça 25 apostas" },
+  gp: { icon: "👑", title: "Campeão do GP", desc: "Ganhe uma aposta no Grande Prêmio" },
+  trifeta: { icon: "🎰", title: "Na mosca", desc: "Acerte uma trifeta" },
 }
 
 // Glass trophy cabinet: medals on wooden shelves, locked ones as padlocked silhouettes.
 export function TrophyCase({ unlocked }: { unlocked: string[] }) {
   const [active, setActive] = useState<string | null>(null)
   const entries = Object.entries(ACHIEVEMENTS)
-  const shelves = [entries.slice(0, 4), entries.slice(4, 8), entries.slice(8)]
+  const shelves = Array.from({ length: Math.ceil(entries.length / 4) }, (_, i) => entries.slice(i * 4, i * 4 + 4))
   const a = active ? ACHIEVEMENTS[active] : null
   const has = (id: string) => unlocked.includes(id)
 
